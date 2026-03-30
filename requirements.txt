@@ -1,0 +1,6 @@
+pynput          # globalne skróty klawiaturowe
+pyperclip       # odczyt/zapis schowka
+openai          # oficjalny klient OpenAI
+pystray         # ikona w tray systemowym
+Pillow          # wymagane przez pystray do ikony
+tkinter         # wbudowany w Python (brak w pip)

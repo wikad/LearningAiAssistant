@@ -4,16 +4,14 @@ import os
 class HistoryManager:
     def __init__(self, filename="history.json"):
         self.filename = filename
-        # Stwórz plik, jeśli nie istnieje
         if not os.path.exists(self.filename):
             with open(self.filename, 'w', encoding='utf-8') as f:
                 json.dump([], f)
 
     def save_entry(self, original_text, ai_response):
-        """Zapisuje nowe zapytanie do pliku JSON."""
         history = self.load_all()
         entry = {
-            "timestamp": os.path.getmtime(self.filename), # prosty znacznik czasu
+            "timestamp": os.path.getmtime(self.filename),
             "input": original_text,
             "output": ai_response
         }

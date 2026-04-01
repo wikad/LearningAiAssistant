@@ -1,7 +1,7 @@
 {
     "accent_color": "#1f538d",
     "bg_color": "#2b2b2b",
-    "system_prompt": "Jeste\u015b pomocnym asystentem. Wyja\u015bniaj poj\u0119cia kr\u00f3tko, konkretnie i zwi\u0119\u017ale w j\u0119zyku polskim.",
+    "system_prompt": "Skr\u00f3\u0107 tekst jak dla debila, wyja\u015bnij po kr\u00f3tce.",
     "hotkeys": {
         "explain_popup": {
             "keys": [

@@ -30,7 +30,7 @@ class SettingsWindow:
     def show(self):
         root = ctk.CTk()
         root.title("AutoExplain - Ustawienia")
-        root.geometry("500x850") # Zwiększamy wysokość okna
+        root.geometry("500x850")
 
         current_cfg = self.load_current_config()
         self.accent_color = current_cfg.get("accent_color", self.DEFAULT_ACCENT)
@@ -39,8 +39,6 @@ class SettingsWindow:
         hotkeys = current_cfg.get("hotkeys", {})
 
         ctk.CTkLabel(root, text="🎨 PERSONALIZACJA", font=("Segoe UI", 20, "bold")).pack(pady=20)
-
-        # --- SEKCJA KOLORÓW ---
         color_frame = ctk.CTkFrame(root)
         color_frame.pack(fill="x", padx=20, pady=10)
 
@@ -54,7 +52,6 @@ class SettingsWindow:
                                command=lambda: self.pick_color(self.bg_color, btn_bg, "bg_color"))
         btn_bg.pack(pady=5)
 
-        # --- SEKCJA SKRÓTÓW ---
         ctk.CTkLabel(root, text="⌨️ SKRÓTY KLAWISZOWE", font=("Segoe UI", 14, "bold")).pack(pady=(20, 10))
 
         def create_hk_input(label, default_keys):
@@ -72,8 +69,6 @@ class SettingsWindow:
         self.prompt_box = ctk.CTkTextbox(root, width=400, height=100)
         self.prompt_box.insert("0.0", system_prompt)
         self.prompt_box.pack(pady=5)
-
-        # --- FUNKCJA PRZYWRACANIA DOMYŚLNYCH ---
         def restore_defaults():
             self.accent_color = self.DEFAULT_ACCENT
             self.bg_color = self.DEFAULT_BG
@@ -82,8 +77,6 @@ class SettingsWindow:
             # Reset Promptu
             self.prompt_box.delete("0.0", "end")
             self.prompt_box.insert("0.0", self.DEFAULT_PROMPT)
-            
-            # Reset skrótów w polach tekstowych
             hk_explain.delete(0, 'end')
             hk_explain.insert(0, "alt_l+q")
             hk_close.delete(0, 'end')
@@ -92,8 +85,6 @@ class SettingsWindow:
             hk_exit.insert(0, "alt_l+p")
             
             print("[SETTINGS] Przywrócono wartości domyślne do widoku.")
-
-        # --- PRZYCISKI AKCJI ---
         btn_restore = ctk.CTkButton(root, text="Przywróć domyślne", fg_color="transparent", 
                                     border_width=1, border_color="#555", text_color="#aaa",
                                     hover_color="#333", command=restore_defaults)

@@ -14,7 +14,6 @@ class DisplayWindow:
         self.current_index = len(self.history) - 1
         self.root = None
         
-        # Domyślne kolory (zostaną nadpisane przez load_theme)
         self.accent_color = "#1f538d"
         self.bg_color = "#2b2b2b"
         self.include_context = False
@@ -22,24 +21,24 @@ class DisplayWindow:
         self.load_theme()
 
     def load_theme(self):
-        """Wczytuje kolory akcentu i tła z pliku config.json."""
         try:
             if os.path.exists("config.json"):
                 with open("config.json", 'r', encoding='utf-8') as f:
                     cfg = json.load(f)
-                    # Czytamy oba klucze, które dodaliśmy w ustawieniach
                     self.accent_color = cfg.get("accent_color", "#1f538d")
                     self.bg_color = cfg.get("bg_color", "#2b2b2b")
         except Exception as e:
             print(f"Błąd wczytywania motywu: {e}")
 
     def close_window(self):
-        try:
-            if self.root:
+        """Bezpieczne zamykanie okna z obsługą wątków."""
+        if self.root:
+            try:
+                # Zlecenie zniszczenia okna w wątku głównym Tkintera
                 self.root.after(0, self.root.destroy)
                 self.root = None
-        except:
-            pass
+            except:
+                pass
 
     def add_to_history(self, original, response):
         self.history_mgr.save_entry(original, response)
@@ -48,6 +47,7 @@ class DisplayWindow:
         self.show_window()
 
     def show_window(self):
+        """Wyświetla okno lub aktualizuje istniejące."""
         window_exists = False
         try:
             if self.root and self.root.winfo_exists():
@@ -56,15 +56,18 @@ class DisplayWindow:
             window_exists = False
 
         if window_exists:
+            # Okno istnieje - aktualizujemy UI
             self.root.after(0, self._update_ui)
             self.root.after(0, lambda: self.root.deiconify())
             self.root.after(0, lambda: self.root.attributes("-topmost", True))
         else:
+            # Tworzymy nowe okno w osobnym wątku, jeśli nie istnieje
             self.root = None
             thread = Thread(target=self._create_window, daemon=True)
             thread.start()
 
     def _update_ui(self):
+        """Odświeża tekst i stan przycisków w oknie."""
         if not hasattr(self, 'text_area'): return
         
         self.text_area.configure(state="normal")
@@ -73,7 +76,6 @@ class DisplayWindow:
             self.text_area.insert("0.0", self.history[self.current_index])
         self.text_area.configure(state="disabled")
         
-        # Kolor przycisku wstecz
         if self.current_index > 0:
             self.btn_back.configure(state="normal", text_color="white")
         else:
@@ -85,6 +87,7 @@ class DisplayWindow:
             self._update_ui()
 
     def _toggle_context(self):
+        """Przełącza dołączanie poprzedniej odpowiedzi do nowego pytania."""
         self.include_context = not self.include_context
         if self.include_context:
             self.btn_context.configure(fg_color=self.accent_color, text="🔗+")
@@ -92,30 +95,34 @@ class DisplayWindow:
             self.btn_context.configure(fg_color="#333", text="🔗")
 
     def _on_quick_question(self, event=None):
+        """Obsługa pytania zadanego bezpośrednio w oknie."""
         question = self.entry_question.get()
         if not question.strip(): return
         
+        # Pobieramy kontekst tylko jeśli 🔗+ jest aktywne
         last_answer = self.history[self.current_index] if (self.include_context and self.history) else None
         self.entry_question.delete(0, 'end')
 
         self.add_to_history("Pytanie...", "⌛ AI generuje odpowiedź...")
         
+        # Lokalne importy, aby uniknąć problemów z cyklicznością
         from core.openai_client import handle_quick_question
         answer = handle_quick_question(question, last_answer)
         
+        # Usuwamy komunikat ładowania i dodajemy prawdziwą odpowiedź
         if self.history: self.history.pop()
         self.add_to_history(question, answer)
 
     def _create_window(self):
-        self.load_theme() # Odśwież kolory przed narysowaniem
+        """Tworzy instancję okna głównego."""
+        self.load_theme()
         
         self.root = ctk.CTk()
-        self.root.overrideredirect(True)
+        self.root.overrideredirect(True) # Brak systemowej ramki
         self.root.attributes("-topmost", True)
-        # Ustawiamy tło głównego okna na kolor tła (bg_color)
         self.root.configure(fg_color=self.bg_color)
 
-        # Logika przesuwania
+        # Obsługa przesuwania okna
         def start_move(event):
             self.root._offsetx, self.root._offsety = event.x, event.y
         def do_move(event):
@@ -123,7 +130,7 @@ class DisplayWindow:
             y = self.root.winfo_y() + event.y - self.root._offsety
             self.root.geometry(f"+{x}+{y}")
 
-        # Pozycjonowanie
+        # Pozycjonowanie przy kursorze myszy
         mouse_x, mouse_y = pyautogui.position()
         w, h = 400, 320
         target_x = mouse_x + 20
@@ -139,24 +146,19 @@ class DisplayWindow:
             self.root, 
             corner_radius=15, 
             border_width=2, 
-            border_color=self.accent_color, # Kolor obramowania
-            fg_color=self.bg_color           # Kolor wypełnienia (tło)
+            border_color=self.accent_color,
+            fg_color=self.bg_color
         )
         main_frame.pack(expand=True, fill='both', padx=2, pady=2)
 
-        # --- PASEK GÓRNY (NAWIGACJA) ---
-        nav_bar = ctk.CTkFrame(
-            main_frame, 
-            fg_color=self.accent_color,     # Pasek ma kolor akcentu
-            height=35,
-            corner_radius=10
-        )
+        # --- PASEK GÓRNY (UCHWYT) ---
+        nav_bar = ctk.CTkFrame(main_frame, fg_color=self.accent_color, height=35, corner_radius=10)
         nav_bar.pack(fill='x', padx=5, pady=5)
         nav_bar.bind("<ButtonPress-1>", start_move)
         nav_bar.bind("<B1-Motion>", do_move)
 
         title_label = ctk.CTkLabel(nav_bar, text="AUTO EXPLAIN", font=("Segoe UI", 10, "bold"), text_color="white")
-        title_label.pack(side='left', expand=True)
+        title_label.pack(side='left', expand=True, padx=10)
         title_label.bind("<ButtonPress-1>", start_move)
         title_label.bind("<B1-Motion>", do_move)
 
@@ -169,7 +171,7 @@ class DisplayWindow:
         # --- POLE TEKSTOWE ---
         self.text_area = ctk.CTkTextbox(
             main_frame, 
-            fg_color=self.bg_color,         # Tło tekstu takie samo jak bg_color
+            fg_color=self.bg_color,
             font=("Segoe UI", 13), 
             wrap="word",
             text_color="white"
@@ -180,18 +182,20 @@ class DisplayWindow:
         question_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
         question_frame.pack(fill='x', padx=10, pady=(0, 10))
 
+        # Przycisk kontekstu (łączy się z poprzednią odpowiedzią)
         self.btn_context = ctk.CTkButton(question_frame, text="🔗", width=35, height=35,
                                          fg_color="#333", hover_color="#444",
                                          command=self._toggle_context, corner_radius=10)
         self.btn_context.pack(side='left', padx=(0, 5))
 
+        # Pole wpisywania dopytań
         self.entry_question = ctk.CTkEntry(
             question_frame, 
             placeholder_text="Zadaj pytanie...", 
             height=35, 
             corner_radius=10,
-            fg_color=self.bg_color,         # Tło wpisywania
-            border_color=self.accent_color  # Ramka wpisywania
+            fg_color=self.bg_color,
+            border_color=self.accent_color
         )
         self.entry_question.pack(side='left', expand=True, fill='x')
         self.entry_question.bind("<Return>", self._on_quick_question)

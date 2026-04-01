@@ -1,25 +1,23 @@
 import os
 from openai import OpenAI
-from dotenv import load_dotenv # Importujemy ładowarkę .env
+from dotenv import load_dotenv
 from ui.display import DisplayWindow
 import pyperclip
 import pyautogui
 import time
 import json
-# 1. Ładujemy zmienne z pliku .env
-# Jeśli plik jest w folderze wyżej, używamy ../.env
-base_dir = os.path.dirname(os.path.dirname(__file__)) # folder główny projektu
+
+base_dir = os.path.dirname(os.path.dirname(__file__))
 dotenv_path = os.path.join(base_dir, '.env')
 load_dotenv(dotenv_path)
 
-# 2. Inicjalizujemy klienta (teraz automatycznie znajdzie klucz w systemie)
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY")) 
 
 window_manager = DisplayWindow()
 
-def get_ai_explanation(text):
-    # Wczytujemy prompt z configa za każdym razem (żeby zmiany działały bez restartu)
-    system_instruction = "Jesteś pomocnym asystentem." # Fallback
+def get_ai_explanation(text, context=None):
+    """Pobiera odpowiedź od AI, uwzględniając opcjonalny kontekst rozmowy."""
+    system_instruction = "Jesteś pomocnym asystentem."
     try:
         with open("config.json", "r", encoding="utf-8") as f:
             cfg = json.load(f)
@@ -27,12 +25,19 @@ def get_ai_explanation(text):
     except: pass
 
     try:
+        # Budujemy listę wiadomości dla modelu
+        messages = [{"role": "system", "content": system_instruction}]
+        
+        # Jeśli przekazano poprzednią odpowiedź (kontekst), dodajemy ją
+        if context:
+            messages.append({"role": "assistant", "content": context})
+            messages.append({"role": "user", "content": f"Dopytuję o to: {text}"})
+        else:
+            messages.append({"role": "user", "content": f"Wyjaśnij: {text}"})
+
         response = client.chat.completions.create(
             model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": system_instruction}, # TU WSTAWIAMY PROMPT
-                {"role": "user", "content": f"Wyjaśnij: {text}"}
-            ],
+            messages=messages,
             max_tokens=300
         )
         return response.choices[0].message.content
@@ -40,9 +45,7 @@ def get_ai_explanation(text):
         return f"Błąd API: {e}"
 
 def do_explain(data):
-    """Główna akcja wyzwalana skrótem klawiszowym."""
-    # 1. Kopiowanie tekstu
-    pyperclip.copy("") # Czyścimy schowek
+    pyperclip.copy("")
     pyautogui.keyUp('alt')
     time.sleep(0.1)
     pyautogui.hotkey('ctrl', 'c')
@@ -54,17 +57,14 @@ def do_explain(data):
         print("[!] Brak tekstu.")
         return
 
-    # 2. Pobieranie odpowiedzi (Wywołanie API)
-    # Wyświetlamy tymczasowy komunikat "Myślę...", żeby użytkownik wiedział, że coś się dzieje
+    # Wyświetlamy status ładowania
     window_manager.add_to_history(selected_text, "⌛ AI myśli...")
     
-    # Pobieramy prawdziwą odpowiedź
     actual_response = get_ai_explanation(selected_text)
     
-    # 3. Aktualizacja okna prawdziwą odpowiedzią
-    # Usuwamy "Myślę..." z historii i dodajemy prawdziwy tekst
+    # Podmieniamy "⌛ AI myśli..." na faktyczną odpowiedź
     if window_manager.history:
-        window_manager.history.pop() # Usuwamy komunikat ładowania
+        window_manager.history.pop()
     window_manager.add_to_history(selected_text, actual_response)
 
 def do_close_ui(data):
@@ -74,8 +74,7 @@ def do_exit(data):
     print("[SYSTEM] Zamykanie...")
     os._exit(0)
 
-# Funkcja dla Twojego nowego pola "Szybkie Pytanie" w display.py
 def handle_quick_question(question, context):
-    """Wywoływane bezpośrednio z UI po naciśnięciu Enter."""
+    """Funkcja pomocnicza wywoływana z poziomu okna display."""
     answer = get_ai_explanation(question, context=context)
     return answer

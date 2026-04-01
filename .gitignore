@@ -4,3 +4,4 @@ history.json
 utils/__pycache__/
 core/__pycache__/
 ui/__pycache__/
+/venv

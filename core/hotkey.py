@@ -18,16 +18,13 @@ class HotkeyHandler:
                     func = self.action_map.get(name)
                     
                     if func:
-                        # --- KLUCZOWA ZMIANA ---
-                        # Tworzymy nowy wątek dla funkcji, aby nie blokować listenera
                         action_thread = threading.Thread(
                             target=func, 
                             args=(config.get("data"),),
-                            daemon=True # Wątek zamknie się razem z aplikacją
+                            daemon=True
                         )
                         action_thread.start()
                     
-                    # Czyścimy klawisze, by uniknąć natychmiastowego powtórzenia
                     self.current_keys.clear()
 
     def on_release(self, key):

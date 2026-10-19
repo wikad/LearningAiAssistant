@@ -1,8 +1,11 @@
 import json
 import os
+import time
+
+from utils.paths import HISTORY_PATH
 
 class HistoryManager:
-    def __init__(self, filename="history.json"):
+    def __init__(self, filename=HISTORY_PATH):
         self.filename = filename
         if not os.path.exists(self.filename):
             with open(self.filename, 'w', encoding='utf-8') as f:
@@ -11,7 +14,7 @@ class HistoryManager:
     def save_entry(self, original_text, ai_response):
         history = self.load_all()
         entry = {
-            "timestamp": os.path.getmtime(self.filename),
+            "timestamp": time.time(),
             "input": original_text,
             "output": ai_response
         }

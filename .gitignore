@@ -1,7 +1,10 @@
 .env
-/env
+env/
+venv/
+.venv/
+__pycache__/
+*.py[cod]
 history.json
-utils/__pycache__/
-core/__pycache__/
-ui/__pycache__/
-/venv
+build/
+dist/
+*.spec

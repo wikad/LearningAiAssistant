@@ -4,6 +4,7 @@ from threading import Thread
 import os
 from pystray import MenuItem as item
 from utils.config_manager import ConfigLoader
+from utils.paths import CONFIG_PATH
 from core.hotkey import HotkeyHandler
 import core.openai_client as actions
 from ui.settings_window import SettingsWindow
@@ -15,13 +16,6 @@ def manage_actions():
         "exit_app": actions.do_exit,
     }
     return action_map
-
-def show_settings(icon, item):
-    print("[SYSTEM] Otwieranie okna ustawień...")
-    settings = SettingsWindow()
-    Thread(target=settings.show, daemon=True).start()
-
-
 
 ICON_FILENAME = "assets/icon.png"
 
@@ -47,11 +41,12 @@ def on_quit(icon, item):
     os._exit(0)
 
 def show_settings(icon, item):
+    print("[SYSTEM] Otwieranie okna ustawień...")
     settings = SettingsWindow()
     Thread(target=settings.show, daemon=True).start()
 
 def run_hotkeys():
-    loader = ConfigLoader("config.json")
+    loader = ConfigLoader(CONFIG_PATH)
     hotkeys_data = loader.load_hotkeys()
     action_map = manage_actions()
 

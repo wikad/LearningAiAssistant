@@ -2,6 +2,7 @@ import customtkinter as ctk
 import pyautogui
 from threading import Thread
 from utils.history_manager import HistoryManager
+from utils.paths import CONFIG_PATH
 import os
 import json
 
@@ -22,8 +23,8 @@ class DisplayWindow:
 
     def load_theme(self):
         try:
-            if os.path.exists("config.json"):
-                with open("config.json", 'r', encoding='utf-8') as f:
+            if os.path.exists(CONFIG_PATH):
+                with open(CONFIG_PATH, 'r', encoding='utf-8') as f:
                     cfg = json.load(f)
                     self.accent_color = cfg.get("accent_color", "#1f538d")
                     self.bg_color = cfg.get("bg_color", "#2b2b2b")
@@ -37,7 +38,7 @@ class DisplayWindow:
                 # Zlecenie zniszczenia okna w wątku głównym Tkintera
                 self.root.after(0, self.root.destroy)
                 self.root = None
-            except:
+            except Exception:
                 pass
 
     def add_to_history(self, original, response):
@@ -52,7 +53,7 @@ class DisplayWindow:
         try:
             if self.root and self.root.winfo_exists():
                 window_exists = True
-        except:
+        except Exception:
             window_exists = False
 
         if window_exists:

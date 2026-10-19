@@ -2,16 +2,16 @@ import os
 from openai import OpenAI
 from dotenv import load_dotenv
 from ui.display import DisplayWindow
+from utils.paths import CONFIG_PATH, ENV_PATH
 import pyperclip
 import pyautogui
 import time
 import json
 
-base_dir = os.path.dirname(os.path.dirname(__file__))
-dotenv_path = os.path.join(base_dir, '.env')
-load_dotenv(dotenv_path)
+load_dotenv(ENV_PATH)
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY")) 
+MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 window_manager = DisplayWindow()
 
@@ -19,10 +19,11 @@ def get_ai_explanation(text, context=None):
     """Pobiera odpowiedź od AI, uwzględniając opcjonalny kontekst rozmowy."""
     system_instruction = "Jesteś pomocnym asystentem."
     try:
-        with open("config.json", "r", encoding="utf-8") as f:
+        with open(CONFIG_PATH, "r", encoding="utf-8") as f:
             cfg = json.load(f)
             system_instruction = cfg.get("system_prompt", system_instruction)
-    except: pass
+    except (OSError, json.JSONDecodeError):
+        pass
 
     try:
         # Budujemy listę wiadomości dla modelu
@@ -36,7 +37,7 @@ def get_ai_explanation(text, context=None):
             messages.append({"role": "user", "content": f"Wyjaśnij: {text}"})
 
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model=MODEL,
             messages=messages,
             max_tokens=300
         )

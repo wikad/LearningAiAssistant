@@ -3,12 +3,14 @@ import json
 import os
 from tkinter import colorchooser
 
+from utils.paths import CONFIG_PATH
+
 class SettingsWindow:
     def __init__(self):
-        self.config_path = "config.json"
+        self.config_path = CONFIG_PATH
         self.DEFAULT_ACCENT = "#1f538d"
         self.DEFAULT_BG = "#2b2b2b"
-        self.DEFAULT_PROMPT = "Jesteś pomocnym asystentem. Wyjaśniaj pojęcia krótko, konkretnie i zwięźle w języku polskim."
+        self.DEFAULT_PROMPT = "Jesteś pomocnym asystentem. Wyjaśniaj pojęcia krótko, konkretnie i prostym językiem, po polsku."
         
         self.accent_color = self.DEFAULT_ACCENT
         self.bg_color = self.DEFAULT_BG
@@ -18,7 +20,8 @@ class SettingsWindow:
             try:
                 with open(self.config_path, 'r', encoding='utf-8') as f:
                     return json.load(f)
-            except: pass
+            except (OSError, json.JSONDecodeError):
+                pass
         return {}
 
     def pick_color(self, initial, button_ref, attr_name):
@@ -61,9 +64,9 @@ class SettingsWindow:
             entry.pack(pady=5)
             return entry
 
-        hk_explain = create_hk_input("Wyjaśnianie (AI):", hotkeys.get("explain_popup", {}).get("keys", ["alt", "q"]))
-        hk_close = create_hk_input("Zamykanie okna:", hotkeys.get("close_window", {}).get("keys", ["alt", "x"]))
-        hk_exit = create_hk_input("Wyjście z aplikacji:", hotkeys.get("exit_app", {}).get("keys", ["ctrl", "shift", "c"]))
+        hk_explain = create_hk_input("Wyjaśnianie (AI):", hotkeys.get("explain_popup", {}).get("keys", ["alt_l", "q"]))
+        hk_close = create_hk_input("Zamykanie okna:", hotkeys.get("close_window", {}).get("keys", ["alt_l", "a"]))
+        hk_exit = create_hk_input("Wyjście z aplikacji:", hotkeys.get("exit_app", {}).get("keys", ["alt_l", "p"]))
 
         ctk.CTkLabel(root, text="🤖 INSTRUKCJA DLA AI (PROMPT)", font=("Segoe UI", 14, "bold")).pack(pady=(20, 5))
         self.prompt_box = ctk.CTkTextbox(root, width=400, height=100)
@@ -102,7 +105,7 @@ class SettingsWindow:
                 }
             }
             with open(self.config_path, 'w', encoding='utf-8') as f:
-                json.dump(new_config, f, indent=4)
+                json.dump(new_config, f, indent=4, ensure_ascii=False)
             root.destroy()
 
         ctk.CTkButton(root, text="ZAPISZ I ZASTOSUJ", fg_color="#28a745", hover_color="#218838", 
